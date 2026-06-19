@@ -1,17 +1,17 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { SavedTripList } from "./SavedTripList";
+import {
+  deleteSavedTrip,
+  loadSavedTrips,
+  saveTrip,
+  type SavedTrip,
+} from "../storage";
 import type { TripInput, TripPlan } from "../types";
 
 type Status = "empty" | "loading" | "generated" | "editing" | "error";
 type PlanSource = "ai" | "mock" | "mock-fallback" | "saved";
-
-type StoredBoard = {
-  tripPlan: TripPlan;
-  source: PlanSource;
-};
-
-const storageKey = "ai-travel-board.trip-plan";
 
 const interestOptions = [
   { id: "food", label: "맛집" },
@@ -76,37 +76,35 @@ export function TripPlannerBoard() {
   const [status, setStatus] = useState<Status>("empty");
   const [error, setError] = useState("");
   const [assistantMessage, setAssistantMessage] = useState("");
+  const [savedTrips, setSavedTrips] = useState<SavedTrip[]>([]);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const saved = window.localStorage.getItem(storageKey);
-      if (!saved) return;
+      const trips = loadSavedTrips();
+      setSavedTrips(trips);
 
-      try {
-        const parsed = JSON.parse(saved) as StoredBoard | TripPlan;
-        const savedTripPlan = "tripPlan" in parsed ? parsed.tripPlan : parsed;
-
-        setTripPlan(savedTripPlan);
-        setSource("saved");
+      if (trips[0]) {
+        setTripPlan(trips[0].tripPlan);
+        setSource(trips[0].source);
         setStatus("generated");
-        setAssistantMessage("저장된 여행 보드를 불러왔습니다.");
-      } catch {
-        window.localStorage.removeItem(storageKey);
+        setAssistantMessage("저장한 여행 보드를 불러왔습니다.");
       }
+
+      setHasHydrated(true);
     }, 0);
 
     return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (tripPlan) {
-      const storedBoard: StoredBoard = {
-        tripPlan,
-        source: source ?? "saved",
-      };
-      window.localStorage.setItem(storageKey, JSON.stringify(storedBoard));
-    }
-  }, [source, tripPlan]);
+    if (!hasHydrated || !tripPlan || !source || source === "saved") return;
+    const timer = window.setTimeout(() => {
+      setSavedTrips(saveTrip(tripPlan, source));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [hasHydrated, source, tripPlan]);
 
   const selectedPlaceIds = useMemo(() => {
     const ids = tripPlan?.days.flatMap((day) =>
@@ -183,12 +181,30 @@ export function TripPlannerBoard() {
   }
 
   function resetTrip() {
-    window.localStorage.removeItem(storageKey);
     setTripPlan(null);
     setSource(null);
     setStatus("empty");
     setError("");
     setAssistantMessage("저장된 여행 보드를 초기화했습니다.");
+  }
+
+  function loadSavedTrip(savedTrip: SavedTrip) {
+    setTripPlan(savedTrip.tripPlan);
+    setSource(savedTrip.source);
+    setStatus("generated");
+    setError("");
+    setAssistantMessage("저장한 여행 보드를 불러왔습니다.");
+  }
+
+  function removeSavedTrip(tripId: string) {
+    setSavedTrips(deleteSavedTrip(tripId));
+
+    if (tripPlan?.id === tripId) {
+      setTripPlan(null);
+      setSource(null);
+      setStatus("empty");
+      setAssistantMessage("현재 여행 보드를 삭제했습니다.");
+    }
   }
 
   function toggleInterest(id: string) {
@@ -460,6 +476,13 @@ export function TripPlannerBoard() {
               {status === "editing" ? "수정 중..." : "요청 반영"}
             </button>
           </section>
+
+          <SavedTripList
+            activeTripId={tripPlan?.id}
+            onDelete={removeSavedTrip}
+            onLoad={loadSavedTrip}
+            trips={savedTrips}
+          />
 
           <section className="panel p-5">
             <p className="text-sm font-bold text-[var(--accent)]">장소 후보</p>
