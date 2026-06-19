@@ -168,6 +168,7 @@ export function createMockTripPlan(input: TripInput): TripPlan {
       "mock 일정에서도 식사, 휴식, 장소 후보를 분리해 이후 AI 응답으로 교체하기 쉽게 구성했습니다.",
       "장소 데이터는 Google Places API 연동 시 같은 구조로 대체할 수 있습니다.",
     ],
+    chatMessages: [],
     updatedAt: new Date().toISOString(),
   };
 }

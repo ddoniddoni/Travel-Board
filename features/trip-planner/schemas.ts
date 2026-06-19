@@ -54,6 +54,13 @@ export const dayPlanSchema = z.object({
   items: z.array(itineraryItemSchema).min(1),
 });
 
+export const chatMessageSchema = z.object({
+  id: z.string().min(1),
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(800),
+  createdAt: z.string().min(1),
+});
+
 export const tripPlanSchema = z.object({
   id: z.string().min(1),
   destination: z.string().min(1),
@@ -63,6 +70,7 @@ export const tripPlanSchema = z.object({
   days: z.array(dayPlanSchema).min(1),
   places: z.array(placeCandidateSchema).min(1),
   qualityNotes: z.array(z.string()).default([]),
+  chatMessages: z.array(chatMessageSchema).default([]),
   updatedAt: z.string().min(1),
 });
 

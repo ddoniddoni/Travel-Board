@@ -185,3 +185,18 @@ button:disabled {
 .saved-trip-delete:focus-visible {
   background: #ffe4e6;
 }
+
+.chat-message {
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.chat-message.user {
+  background: #e6f3ef;
+  color: var(--accent-strong);
+}
+
+.chat-message.assistant {
+  background: var(--panel-muted);
+  color: #334155;
+}
