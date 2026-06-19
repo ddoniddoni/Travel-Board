@@ -21,6 +21,7 @@ export async function generateTripPlanWithAI(input: TripInput): Promise<TripPlan
     ...object,
     id: object.id || `trip-${Date.now()}`,
     input,
+    chatMessages: [],
     updatedAt: new Date().toISOString(),
   });
 }
@@ -69,6 +70,7 @@ export async function modifyTripPlanWithAI(
       ...object.tripPlan,
       id: tripPlan.id,
       input: tripPlan.input,
+      chatMessages: tripPlan.chatMessages,
       updatedAt: new Date().toISOString(),
     },
   });

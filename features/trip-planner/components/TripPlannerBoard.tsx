@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChatModificationPanel } from "./ChatModificationPanel";
 import { SavedTripList } from "./SavedTripList";
 import {
   deleteSavedTrip,
@@ -71,7 +72,6 @@ export function TripPlannerBoard() {
   const [notes, setNotes] = useState(
     "너무 빡세지 않게, 저녁에는 야경이 있으면 좋겠어.",
   );
-  const [message, setMessage] = useState("2일차를 더 여유롭게 바꿔줘.");
   const [tripPlan, setTripPlan] = useState<TripPlan | null>(null);
   const [source, setSource] = useState<PlanSource | null>(null);
   const [status, setStatus] = useState<Status>("empty");
@@ -156,7 +156,7 @@ export function TripPlannerBoard() {
     );
   }
 
-  async function modifyTrip() {
+  async function modifyTrip(message: string) {
     if (!tripPlan) return;
 
     setStatus("editing");
@@ -175,7 +175,25 @@ export function TripPlannerBoard() {
       return;
     }
 
-    setTripPlan(data.tripPlan);
+    const createdAt = new Date().toISOString();
+    setTripPlan({
+      ...data.tripPlan,
+      chatMessages: [
+        ...tripPlan.chatMessages,
+        {
+          id: `user-${Date.now()}`,
+          role: "user",
+          content: message,
+          createdAt,
+        },
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: data.assistantMessage,
+          createdAt,
+        },
+      ],
+    });
     setSource(data.source);
     setAssistantMessage(`${data.assistantMessage} 변경 내용도 저장했습니다.`);
     setStatus("generated");
@@ -471,23 +489,12 @@ export function TripPlannerBoard() {
         </section>
 
         <aside className="space-y-4">
-          <section className="panel p-5">
-            <p className="text-sm font-bold text-[var(--accent)]">채팅 수정</p>
-            <h2 className="mt-1 text-2xl font-bold">일정 바꾸기</h2>
-            <textarea
-              className="field mt-4 min-h-24 resize-none"
-              onChange={(event) => setMessage(event.target.value)}
-              value={message}
-            />
-            <button
-              className="primary-button mt-3"
-              disabled={!tripPlan || status === "editing"}
-              onClick={modifyTrip}
-              type="button"
-            >
-              {status === "editing" ? "수정 중..." : "요청 반영"}
-            </button>
-          </section>
+          <ChatModificationPanel
+            disabled={!tripPlan || status === "editing"}
+            isEditing={status === "editing"}
+            messages={tripPlan?.chatMessages ?? []}
+            onSubmit={modifyTrip}
+          />
 
           <SavedTripList
             activeTripId={tripPlan?.id}
