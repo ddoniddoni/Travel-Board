@@ -155,3 +155,33 @@ button:disabled {
   background: #eef2ff;
   color: #4338ca;
 }
+
+.saved-trip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: white;
+  padding: 0.75rem;
+}
+
+.saved-trip.active {
+  border-color: var(--accent);
+  background: #e6f3ef;
+}
+
+.saved-trip-delete {
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  padding: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--rose);
+}
+
+.saved-trip-delete:hover,
+.saved-trip-delete:focus-visible {
+  background: #ffe4e6;
+}
