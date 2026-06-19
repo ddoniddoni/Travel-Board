@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f7f2;
+  --background: #f6f7f4;
   --foreground: #1f2933;
   --panel: #ffffff;
-  --panel-muted: #f0f4f3;
-  --line: #d7ded8;
+  --panel-muted: #f1f4ef;
+  --line: #d9dfd7;
   --accent: #0f766e;
-  --accent-strong: #0b5f59;
-  --orange: #d97706;
+  --accent-strong: #115e59;
+  --orange: #b45309;
   --rose: #be123c;
 }
 
@@ -33,4 +33,125 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.field {
+  margin-top: 0.5rem;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  padding: 0.625rem 0.75rem;
+  color: var(--foreground);
+  outline: none;
+}
+
+.field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 0.14);
+}
+
+.primary-button {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  padding: 0.75rem 1rem;
+  font-weight: 800;
+  color: white;
+}
+
+.secondary-button {
+  min-width: 72px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  padding: 0.75rem 1rem;
+  font-weight: 800;
+  color: #475569;
+}
+
+.segmented,
+.chip {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #475569;
+}
+
+.segmented.active,
+.chip.active {
+  border-color: var(--accent);
+  background: #e6f3ef;
+  color: var(--accent-strong);
+}
+
+.badge {
+  border-radius: 6px;
+  background: #f1f5f9;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.badge.active {
+  background: #e6f3ef;
+  color: var(--accent-strong);
+}
+
+.source-badge {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.source-badge.ai {
+  background: #e6f3ef;
+  color: var(--accent-strong);
+}
+
+.source-badge.mock {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.source-badge.mock-fallback {
+  background: #ffe4e6;
+  color: var(--rose);
+}
+
+.source-badge.saved {
+  background: #eef2ff;
+  color: #4338ca;
 }
