@@ -110,3 +110,28 @@ export function deleteSavedTrip(tripId: string): SavedTrip[] {
   writeSavedTrips(trips);
   return trips;
 }
+
+export function renameSavedTrip(tripId: string, title: string): SavedTrip[] {
+  const normalizedTitle = title.trim().slice(0, 80);
+  if (!normalizedTitle) return loadSavedTrips();
+
+  const savedAt = new Date().toISOString();
+  const trips = loadSavedTrips()
+    .map((savedTrip) =>
+      savedTrip.tripPlan.id === tripId
+        ? {
+            ...savedTrip,
+            tripPlan: {
+              ...savedTrip.tripPlan,
+              title: normalizedTitle,
+              updatedAt: savedAt,
+            },
+            savedAt,
+          }
+        : savedTrip,
+    )
+    .sort((left, right) => right.savedAt.localeCompare(left.savedAt));
+
+  writeSavedTrips(trips);
+  return trips;
+}

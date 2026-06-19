@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { SavedTrip } from "../storage";
 
 type SavedTripListProps = {
@@ -7,6 +8,7 @@ type SavedTripListProps = {
   trips: SavedTrip[];
   onDelete: (tripId: string) => void;
   onLoad: (trip: SavedTrip) => void;
+  onRename: (tripId: string, title: string) => void;
 };
 
 function formatSavedAt(value: string) {
@@ -26,7 +28,21 @@ export function SavedTripList({
   trips,
   onDelete,
   onLoad,
+  onRename,
 }: SavedTripListProps) {
+  const [editingTripId, setEditingTripId] = useState<string>();
+  const [draftTitle, setDraftTitle] = useState("");
+
+  function startRenaming(trip: SavedTrip) {
+    setEditingTripId(trip.tripPlan.id);
+    setDraftTitle(trip.tripPlan.title);
+  }
+
+  function finishRenaming(tripId: string) {
+    if (draftTitle.trim()) onRename(tripId, draftTitle);
+    setEditingTripId(undefined);
+  }
+
   return (
     <section className="panel p-5">
       <p className="text-sm font-bold text-[var(--accent)]">저장한 여행</p>
@@ -47,16 +63,49 @@ export function SavedTripList({
               }
               key={trip.tripPlan.id}
             >
-              <button
-                className="min-w-0 flex-1 text-left"
-                onClick={() => onLoad(trip)}
-                type="button"
-              >
-                <p className="truncate text-sm font-bold">{trip.tripPlan.title}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {trip.tripPlan.destination} · {trip.tripPlan.days.length}일 · {formatSavedAt(trip.savedAt)}
-                </p>
-              </button>
+              {editingTripId === trip.tripPlan.id ? (
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <input
+                    aria-label="여행 보드 이름"
+                    className="field mt-0 min-w-0 py-2"
+                    maxLength={80}
+                    onChange={(event) => setDraftTitle(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") finishRenaming(trip.tripPlan.id);
+                      if (event.key === "Escape") setEditingTripId(undefined);
+                    }}
+                    value={draftTitle}
+                  />
+                  <button
+                    className="saved-trip-delete text-[var(--accent-strong)]"
+                    onClick={() => finishRenaming(trip.tripPlan.id)}
+                    type="button"
+                  >
+                    저장
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="min-w-0 flex-1 text-left"
+                  onClick={() => onLoad(trip)}
+                  type="button"
+                >
+                  <p className="truncate text-sm font-bold">{trip.tripPlan.title}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {trip.tripPlan.destination} · {trip.tripPlan.days.length}일 · {formatSavedAt(trip.savedAt)}
+                  </p>
+                </button>
+              )}
+              {editingTripId === trip.tripPlan.id ? null : (
+                <button
+                  aria-label={`${trip.tripPlan.title} 이름 변경`}
+                  className="saved-trip-delete"
+                  onClick={() => startRenaming(trip)}
+                  type="button"
+                >
+                  이름 변경
+                </button>
+              )}
               <button
                 aria-label={`${trip.tripPlan.title} 삭제`}
                 className="saved-trip-delete"

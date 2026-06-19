@@ -5,6 +5,7 @@ import { SavedTripList } from "./SavedTripList";
 import {
   deleteSavedTrip,
   loadSavedTrips,
+  renameSavedTrip,
   saveTrip,
   type SavedTrip,
 } from "../storage";
@@ -204,6 +205,17 @@ export function TripPlannerBoard() {
       setSource(null);
       setStatus("empty");
       setAssistantMessage("현재 여행 보드를 삭제했습니다.");
+    }
+  }
+
+  function renameTrip(tripId: string, title: string) {
+    const trips = renameSavedTrip(tripId, title);
+    setSavedTrips(trips);
+
+    const renamedTrip = trips.find((savedTrip) => savedTrip.tripPlan.id === tripId);
+    if (renamedTrip && tripPlan?.id === tripId) {
+      setTripPlan(renamedTrip.tripPlan);
+      setAssistantMessage("여행 보드 이름을 변경했습니다.");
     }
   }
 
@@ -481,6 +493,7 @@ export function TripPlannerBoard() {
             activeTripId={tripPlan?.id}
             onDelete={removeSavedTrip}
             onLoad={loadSavedTrip}
+            onRename={renameTrip}
             trips={savedTrips}
           />
 
