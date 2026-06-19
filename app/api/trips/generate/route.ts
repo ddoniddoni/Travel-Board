@@ -8,6 +8,7 @@ import {
 import type { TripInput, TripPlan } from "@/features/trip-planner/types";
 import { hasOpenAIKey } from "@/lib/ai/model";
 import { apiErrorResponse } from "@/lib/server/api-response";
+import { searchPlaces } from "@/lib/server/places";
 
 type GenerationSource = "ai" | "mock" | "mock-fallback";
 
@@ -59,9 +60,11 @@ export async function POST(request: Request) {
 async function createTripPlan(
   input: TripInput,
 ): Promise<{ tripPlan: TripPlan; source: GenerationSource }> {
+  const placeCandidates = await searchPlaces(input);
+
   if (!hasOpenAIKey()) {
     return {
-      tripPlan: createMockTripPlan(input),
+      tripPlan: createMockTripPlan(input, placeCandidates),
       source: "mock",
     };
   }
@@ -74,7 +77,7 @@ async function createTripPlan(
   } catch (error) {
     console.error("AI 일정 생성 실패:", error);
     return {
-      tripPlan: createMockTripPlan(input),
+      tripPlan: createMockTripPlan(input, placeCandidates),
       source: "mock-fallback",
     };
   }
