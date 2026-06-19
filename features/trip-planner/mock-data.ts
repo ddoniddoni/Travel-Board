@@ -136,9 +136,12 @@ function buildItems(
   });
 }
 
-export function createMockTripPlan(input: TripInput): TripPlan {
+export function createMockTripPlan(
+  input: TripInput,
+  placeCandidates?: PlaceCandidate[],
+): TripPlan {
   const dates = getDates(input.startDate, input.endDate).slice(0, 7);
-  const places = buildPlaces(input);
+  const places = placeCandidates?.length ? placeCandidates : buildPlaces(input);
   const interestText = input.preference.interests
     .map((interest) => interestLabels[interest] ?? interest)
     .join(", ");
