@@ -133,16 +133,29 @@ export function TripPlannerBoard() {
       },
     };
 
-    const response = await fetch("/api/trips/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
+    let response: Response;
+    let data: unknown;
+    try {
+      response = await fetch("/api/trips/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      data = await response.json().catch(() => null);
+    } catch {
+      setStatus("error");
+      setError("서버에 연결하지 못했습니다. 네트워크를 확인하고 다시 시도해 주세요.");
+      return;
+    }
 
-    const data: unknown = await response.json();
     if (!response.ok || !isTripResponse(data)) {
       setStatus("error");
-      setError("일정을 생성하지 못했습니다. 조건을 확인하고 다시 시도해 주세요.");
+      setError(
+        getApiErrorMessage(
+          data,
+          "일정을 생성하지 못했습니다. 조건을 확인하고 다시 시도해 주세요.",
+        ),
+      );
       return;
     }
 
@@ -162,16 +175,29 @@ export function TripPlannerBoard() {
     setStatus("editing");
     setError("");
 
-    const response = await fetch("/api/trips/modify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, tripPlan }),
-    });
+    let response: Response;
+    let data: unknown;
+    try {
+      response = await fetch("/api/trips/modify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, tripPlan }),
+      });
+      data = await response.json().catch(() => null);
+    } catch {
+      setStatus("error");
+      setError("서버에 연결하지 못했습니다. 네트워크를 확인하고 다시 시도해 주세요.");
+      return;
+    }
 
-    const data: unknown = await response.json();
     if (!response.ok || !isModifyResponse(data)) {
       setStatus("error");
-      setError("수정 요청을 반영하지 못했습니다. 다른 문장으로 다시 시도해 주세요.");
+      setError(
+        getApiErrorMessage(
+          data,
+          "수정 요청을 반영하지 못했습니다. 다른 문장으로 다시 시도해 주세요.",
+        ),
+      );
       return;
     }
 
@@ -580,4 +606,20 @@ function isModifyResponse(
     "assistantMessage" in data &&
     typeof data.assistantMessage === "string"
   );
+}
+
+function getApiErrorMessage(data: unknown, fallback: string) {
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    "error" in data &&
+    typeof data.error === "object" &&
+    data.error !== null &&
+    "message" in data.error &&
+    typeof data.error.message === "string"
+  ) {
+    return data.error.message;
+  }
+
+  return fallback;
 }
