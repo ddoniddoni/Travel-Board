@@ -10,28 +10,53 @@ import type {
   TripPlan,
 } from "@/features/trip-planner/types";
 import { hasOpenAIKey } from "@/lib/ai/model";
+import { apiErrorResponse } from "@/lib/server/api-response";
 
 type ModificationSource = "ai" | "mock" | "mock-fallback";
 
 export async function POST(request: Request) {
-  const body: unknown = await request.json().catch(() => null);
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return apiErrorResponse(
+      "INVALID_JSON",
+      "요청 내용을 읽지 못했습니다. 다시 시도해 주세요.",
+      400,
+    );
+  }
   const parsed = tripModificationRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: {
-          code: "INVALID_MODIFICATION_REQUEST",
-          message: "수정 요청을 처리할 수 없습니다.",
-        },
-      },
-      { status: 400 },
+    return apiErrorResponse(
+      "INVALID_MODIFICATION_REQUEST",
+      "수정 요청을 처리할 수 없습니다.",
+      400,
     );
   }
 
-  const response = await modifyTripPlan(parsed.data);
+  try {
+    const result = await modifyTripPlan(parsed.data);
+    const response = modifyTripResponseSchema.safeParse(result);
 
-  return NextResponse.json(modifyTripResponseSchema.parse(response));
+    if (!response.success) {
+      console.error("Trip modification response validation failed", response.error);
+      return apiErrorResponse(
+        "TRIP_MODIFICATION_FAILED",
+        "수정 요청을 반영하는 중 문제가 생겼습니다. 다시 시도해 주세요.",
+        500,
+      );
+    }
+
+    return NextResponse.json(response.data);
+  } catch (error) {
+    console.error("Trip modification request failed", error);
+    return apiErrorResponse(
+      "TRIP_MODIFICATION_FAILED",
+      "수정 요청을 반영하는 중 문제가 생겼습니다. 다시 시도해 주세요.",
+      500,
+    );
+  }
 }
 
 async function modifyTripPlan(
