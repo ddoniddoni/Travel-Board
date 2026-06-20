@@ -148,6 +148,7 @@ export function TripMapPreview({
               <p className="mt-2 text-sm text-slate-600">{selectedStop.place.address}</p>
             ) : null}
             <a
+              aria-label={`${selectedStop.place.name}을(를) Google Maps에서 새 창으로 열기`}
               className="mt-3 inline-flex text-sm font-bold text-[var(--accent)]"
               href={getGoogleMapsUrl(selectedStop.place)}
               rel="noreferrer"

@@ -378,8 +378,8 @@ export function TripPlannerBoard() {
   const sourceLabel = source ? sourceLabels[source] : null;
 
   return (
-    <main className="min-h-screen px-5 py-5">
-      <header className="mx-auto mb-4 flex max-w-[1480px] items-center justify-between">
+    <main className="min-h-screen px-4 py-4 sm:px-5 sm:py-5">
+      <header className="mx-auto mb-4 flex max-w-[1480px] items-start justify-between gap-4 sm:items-center">
         <div>
           <p className="text-sm font-bold text-[var(--accent)]">AI Travel Board</p>
           <p className="mt-1 text-sm text-[var(--muted)]">여행을 한눈에 정리하는 나만의 보드</p>
@@ -507,7 +507,7 @@ export function TripPlannerBoard() {
             </div>
           </form>
 
-          <section className="mt-5 rounded-md bg-[var(--panel-muted)] p-4">
+          <section aria-live="polite" className="mt-5 rounded-md bg-[var(--panel-muted)] p-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-bold">현재 상태</p>
               {sourceLabel ? (
@@ -543,7 +543,10 @@ export function TripPlannerBoard() {
           </section>
         </aside>
 
-        <section className="panel min-h-[720px] p-5">
+        <section
+          aria-busy={status === "loading" || status === "editing"}
+          className="panel min-h-[520px] p-4 sm:p-5 xl:min-h-[720px]"
+        >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-[var(--accent)]">
