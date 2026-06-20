@@ -61,6 +61,12 @@ function addDays(date: string, days: number) {
   return nextDate.toISOString().slice(0, 10);
 }
 
+function shiftTime(time: string, minutes: number) {
+  const [hours, currentMinutes] = time.split(":").map(Number);
+  const totalMinutes = (hours * 60 + currentMinutes + minutes + 1440) % 1440;
+  return `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
+}
+
 const starterExamples: StarterExample[] = [
   {
     id: "seoul-weekend",
@@ -412,6 +418,41 @@ export function TripPlannerBoard() {
     }
   }
 
+  function shiftItineraryItem(itemId: string, minutes: number) {
+    if (!tripPlan) return;
+    setTripPlan({
+      ...tripPlan,
+      updatedAt: new Date().toISOString(),
+      days: tripPlan.days.map((day) => ({
+        ...day,
+        items: day.items.map((item) =>
+          item.id === itemId ? { ...item, startTime: shiftTime(item.startTime, minutes) } : item,
+        ),
+      })),
+    });
+    setAssistantMessage(`일정 시간을 ${minutes > 0 ? "30분 늦췄어요." : "30분 앞당겼어요."}`);
+  }
+
+  function removeItineraryItem(itemId: string, dayNumber: number) {
+    if (!tripPlan) return;
+    const day = tripPlan.days.find((candidate) => candidate.day === dayNumber);
+    if (!day || day.items.length === 1) {
+      setAssistantMessage("하루에는 최소 한 개의 일정이 필요해요.");
+      return;
+    }
+
+    setTripPlan({
+      ...tripPlan,
+      updatedAt: new Date().toISOString(),
+      days: tripPlan.days.map((candidate) =>
+        candidate.day === dayNumber
+          ? { ...candidate, items: candidate.items.filter((item) => item.id !== itemId) }
+          : candidate,
+      ),
+    });
+    setAssistantMessage("일정 항목을 뺐어요.");
+  }
+
   const sourceLabel = source ? sourceLabels[source] : null;
 
   return (
@@ -640,9 +681,10 @@ export function TripPlannerBoard() {
                         <time className="pt-2 text-sm font-bold text-slate-500">
                           {item.startTime}
                         </time>
+                        <div className={isSelected ? "timeline-item selected" : "timeline-item"}>
                         <button
                           aria-pressed={isSelected}
-                          className={isSelected ? "timeline-item selected" : "timeline-item"}
+                          className="timeline-item-main"
                           disabled={!item.placeId}
                           id={`itinerary-item-${item.id}`}
                           onClick={() => item.placeId && setSelectedPlaceId(item.placeId)}
@@ -662,6 +704,30 @@ export function TripPlannerBoard() {
                             {item.note}
                           </p>
                         </button>
+                        <div className="mt-2 flex flex-wrap gap-2 border-t border-[var(--line)] pt-2">
+                          <button
+                            className="quick-request"
+                            onClick={() => shiftItineraryItem(item.id, -30)}
+                            type="button"
+                          >
+                            30분 앞당기기
+                          </button>
+                          <button
+                            className="quick-request"
+                            onClick={() => shiftItineraryItem(item.id, 30)}
+                            type="button"
+                          >
+                            30분 늦추기
+                          </button>
+                          <button
+                            className="quick-request text-[var(--rose)]"
+                            onClick={() => removeItineraryItem(item.id, day.day)}
+                            type="button"
+                          >
+                            일정 빼기
+                          </button>
+                        </div>
+                        </div>
                       </li>
                       );
                     })}
