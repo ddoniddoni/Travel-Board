@@ -306,6 +306,13 @@ button:disabled {
   color: #b8c0d3;
 }
 
+:root[data-theme="dark"] .segmented.active,
+:root[data-theme="dark"] .chip.active {
+  border-color: #8791ff;
+  background: #343965;
+  color: #f7f7fb;
+}
+
 :root[data-theme="dark"] .source-badge.mock {
   background: #3a2e1b;
   color: #f7cf7b;
