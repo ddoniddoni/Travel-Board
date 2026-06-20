@@ -200,3 +200,22 @@ button:disabled {
   background: var(--panel-muted);
   color: #334155;
 }
+
+.trip-map-marker {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 2px solid white;
+  border-radius: 9999px;
+  background: var(--orange);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgb(15 23 42 / 0.22);
+}
+
+.trip-map-marker.active {
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgb(15 118 110 / 0.2);
+}

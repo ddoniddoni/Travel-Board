@@ -182,8 +182,13 @@ export function modifyMockTripPlan(message: string, tripPlan: TripPlan): TripPla
     message.includes("여유") || lower.includes("relax") || lower.includes("slow");
   const food =
     message.includes("맛집") || message.includes("식당") || lower.includes("food");
+  const cafe = message.includes("카페") || lower.includes("cafe") || lower.includes("coffee");
   const rainy =
     message.includes("비") || message.includes("우천") || lower.includes("rain");
+  const requestedCategory = cafe ? "cafe" : food ? "food" : undefined;
+  const replacementPlace = requestedCategory
+    ? tripPlan.places.find((place) => place.category === requestedCategory)
+    : undefined;
 
   const days = tripPlan.days.map((day) => {
     let items = [...day.items];
@@ -196,13 +201,16 @@ export function modifyMockTripPlan(message: string, tripPlan: TripPlan): TripPla
       }));
     }
 
-    if (food) {
+    if (food || cafe) {
       items = items.map((item, index) =>
         index === 1
           ? {
               ...item,
-              title: `${tripPlan.destination} 로컬 맛집 중심 식사`,
-              type: "meal" as const,
+              title: replacementPlace?.name ?? item.title,
+              placeId: replacementPlace?.id ?? item.placeId,
+              durationMinutes:
+                replacementPlace?.durationMinutes ?? item.durationMinutes,
+              type: cafe ? ("cafe" as const) : ("meal" as const),
               note: "맛집 탐색 비중을 높이도록 식사 블록을 강화했습니다.",
             }
           : item,

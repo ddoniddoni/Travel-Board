@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ChatModificationPanel } from "./ChatModificationPanel";
 import { SavedTripList } from "./SavedTripList";
+import { TripMapPreview } from "./TripMapPreview";
 import {
   deleteSavedTrip,
   loadSavedTrips,
@@ -79,6 +80,7 @@ export function TripPlannerBoard() {
   const [assistantMessage, setAssistantMessage] = useState("");
   const [savedTrips, setSavedTrips] = useState<SavedTrip[]>([]);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string>();
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -113,6 +115,12 @@ export function TripPlannerBoard() {
     );
     return new Set(ids ?? []);
   }, [tripPlan]);
+
+  const displayedSelectedPlaceId = tripPlan?.places.some(
+    (place) => place.id === selectedPlaceId,
+  )
+    ? selectedPlaceId
+    : tripPlan?.days[0]?.items.find((item) => item.placeId)?.placeId;
 
   async function generateTrip(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -272,6 +280,14 @@ export function TripPlannerBoard() {
       }
 
       return [...current, id];
+    });
+  }
+
+  function selectPlaceAndRevealMap(placeId: string) {
+    setSelectedPlaceId(placeId);
+    document.getElementById("trip-map-preview")?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
     });
   }
 
@@ -537,7 +553,11 @@ export function TripPlannerBoard() {
             <div className="mt-5 space-y-3">
               {(tripPlan?.places ?? []).map((place) => (
                 <article
-                  className="rounded-lg border border-[var(--line)] p-4"
+                  className={
+                    displayedSelectedPlaceId === place.id
+                      ? "rounded-lg border-2 border-[var(--accent)] p-4"
+                      : "rounded-lg border border-[var(--line)] p-4"
+                  }
                   key={place.id}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -559,6 +579,13 @@ export function TripPlannerBoard() {
                   <p className="mt-3 text-sm leading-6 text-slate-700">
                     {place.description}
                   </p>
+                  <button
+                    className="mt-3 text-sm font-bold text-[var(--accent)]"
+                    onClick={() => selectPlaceAndRevealMap(place.id)}
+                    type="button"
+                  >
+                    지도에서 보기
+                  </button>
                 </article>
               ))}
               {!tripPlan ? (
@@ -569,14 +596,11 @@ export function TripPlannerBoard() {
             </div>
           </section>
 
-          <section className="panel p-5">
-            <p className="text-sm font-bold text-[var(--accent)]">지도 자리</p>
-            <div className="mt-4 aspect-[4/3] rounded-lg border border-dashed border-[var(--line)] bg-[var(--panel-muted)] p-4">
-              <div className="flex h-full items-center justify-center rounded-md bg-white text-center text-sm font-bold text-slate-600">
-                선택된 장소 좌표와 이동 동선이 여기에 연결됩니다.
-              </div>
-            </div>
-          </section>
+          <TripMapPreview
+            onSelectPlace={setSelectedPlaceId}
+            selectedPlaceId={displayedSelectedPlaceId}
+            tripPlan={tripPlan}
+          />
         </aside>
       </section>
     </main>

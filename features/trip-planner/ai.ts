@@ -3,9 +3,12 @@ import { generateObject } from "ai";
 import { getTripPlannerModel } from "@/lib/ai/model";
 import { tripGenerationPrompt, tripModificationPrompt } from "./prompts";
 import { modifyTripResponseSchema, tripPlanSchema } from "./schemas";
-import type { TripInput, TripPlan } from "./types";
+import type { PlaceCandidate, TripInput, TripPlan } from "./types";
 
-export async function generateTripPlanWithAI(input: TripInput): Promise<TripPlan> {
+export async function generateTripPlanWithAI(
+  input: TripInput,
+  placeCandidates: PlaceCandidate[],
+): Promise<TripPlan> {
   const { object } = await generateObject({
     model: getTripPlannerModel(),
     schema: tripPlanSchema,
@@ -13,21 +16,46 @@ export async function generateTripPlanWithAI(input: TripInput): Promise<TripPlan
     schemaDescription:
       "AI Travel Board UI에서 바로 사용할 수 있는 구조화된 여행 일정 데이터",
     system: tripGenerationPrompt,
-    prompt: buildTripGenerationUserPrompt(input),
+    prompt: buildTripGenerationUserPrompt(input, placeCandidates),
     temperature: 0.4,
   });
+
+  const candidateIds = new Set(placeCandidates.map((place) => place.id));
+  const hasUnknownPlace = object.days.some((day) =>
+    day.items.some((item) => item.placeId && !candidateIds.has(item.placeId)),
+  );
+  if (hasUnknownPlace) {
+    throw new Error("AI itinerary referenced a place outside the verified candidates.");
+  }
 
   return tripPlanSchema.parse({
     ...object,
     id: object.id || `trip-${Date.now()}`,
     input,
+    places: placeCandidates,
     chatMessages: [],
     updatedAt: new Date().toISOString(),
   });
 }
 
-function buildTripGenerationUserPrompt(input: TripInput) {
+function buildTripGenerationUserPrompt(
+  input: TripInput,
+  placeCandidates: PlaceCandidate[],
+) {
+  const verifiedPlaces = placeCandidates.map((place) => ({
+    id: place.id,
+    name: place.name,
+    category: place.category,
+    area: place.area,
+    durationMinutes: place.durationMinutes,
+  }));
+
   return `
+VERIFIED_PLACE_CANDIDATES_JSON:
+${JSON.stringify(verifiedPlaces)}
+
+Use only the IDs from VERIFIED_PLACE_CANDIDATES_JSON for every itinerary item's placeId. Do not invent or add places outside this list.
+
 다음 여행 조건으로 여행 일정을 생성해 주세요.
 
 여행지: ${input.destination}
@@ -64,12 +92,21 @@ export async function modifyTripPlanWithAI(
     temperature: 0.3,
   });
 
+  const candidateIds = new Set(tripPlan.places.map((place) => place.id));
+  const hasUnknownPlace = object.tripPlan.days.some((day) =>
+    day.items.some((item) => item.placeId && !candidateIds.has(item.placeId)),
+  );
+  if (hasUnknownPlace) {
+    throw new Error("AI modification referenced a place outside the verified candidates.");
+  }
+
   return modifyTripResponseSchema.parse({
     ...object,
     tripPlan: {
       ...object.tripPlan,
       id: tripPlan.id,
       input: tripPlan.input,
+      places: tripPlan.places,
       chatMessages: tripPlan.chatMessages,
       updatedAt: new Date().toISOString(),
     },
@@ -77,7 +114,19 @@ export async function modifyTripPlanWithAI(
 }
 
 function buildTripModificationUserPrompt(message: string, tripPlan: TripPlan) {
+  const verifiedPlaces = tripPlan.places.map((place) => ({
+    id: place.id,
+    name: place.name,
+    category: place.category,
+    area: place.area,
+  }));
+
   return `
+VERIFIED_PLACE_CANDIDATES_JSON:
+${JSON.stringify(verifiedPlaces)}
+
+Only use the listed IDs for every modified itinerary item's placeId. Keep the places array unchanged and do not invent new places.
+
 사용자 수정 요청:
 ${message}
 

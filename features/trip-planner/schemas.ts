@@ -34,6 +34,11 @@ export const placeCandidateSchema = z.object({
       lng: z.number(),
     })
     .optional(),
+  address: z.string().min(1).optional(),
+  rating: z.number().min(0).max(5).optional(),
+  openingHoursSummary: z.string().min(1).optional(),
+  provider: z.enum(["mock", "google"]).optional(),
+  providerPlaceId: z.string().min(1).optional(),
 });
 
 export const itineraryItemSchema = z.object({

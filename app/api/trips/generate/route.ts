@@ -5,10 +5,14 @@ import {
   generateTripResponseSchema,
   tripInputSchema,
 } from "@/features/trip-planner/schemas";
-import type { TripInput, TripPlan } from "@/features/trip-planner/types";
+import type {
+  PlaceCandidate,
+  TripInput,
+  TripPlan,
+} from "@/features/trip-planner/types";
 import { hasOpenAIKey } from "@/lib/ai/model";
 import { apiErrorResponse } from "@/lib/server/api-response";
-import { searchPlaces } from "@/lib/server/places";
+import { mockPlacesTool, searchPlaces } from "@/lib/server/places";
 
 type GenerationSource = "ai" | "mock" | "mock-fallback";
 
@@ -60,7 +64,13 @@ export async function POST(request: Request) {
 async function createTripPlan(
   input: TripInput,
 ): Promise<{ tripPlan: TripPlan; source: GenerationSource }> {
-  const placeCandidates = await searchPlaces(input);
+  let placeCandidates: PlaceCandidate[];
+  try {
+    placeCandidates = await searchPlaces(input);
+  } catch (error) {
+    console.error("Place search failed; falling back to mock places", error);
+    placeCandidates = await mockPlacesTool.searchPlaces(input);
+  }
 
   if (!hasOpenAIKey()) {
     return {
@@ -71,7 +81,7 @@ async function createTripPlan(
 
   try {
     return {
-      tripPlan: await generateTripPlanWithAI(input),
+      tripPlan: await generateTripPlanWithAI(input, placeCandidates),
       source: "ai",
     };
   } catch (error) {
