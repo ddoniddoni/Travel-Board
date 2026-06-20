@@ -1,15 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f7f4;
-  --foreground: #1f2933;
+  --background: #f7f7fc;
+  --foreground: #202331;
   --panel: #ffffff;
-  --panel-muted: #f1f4ef;
-  --line: #d9dfd7;
-  --accent: #0f766e;
-  --accent-strong: #115e59;
-  --orange: #b45309;
-  --rose: #be123c;
+  --panel-muted: #f1f2fb;
+  --line: #e4e6f0;
+  --muted: #667085;
+  --accent: #6366f1;
+  --accent-strong: #4338ca;
+  --orange: #f97360;
+  --rose: #e11d48;
+}
+
+:root[data-theme="dark"] {
+  --background: #10111a;
+  --foreground: #f4f5fa;
+  --panel: #191b27;
+  --panel-muted: #222534;
+  --line: #2c3040;
+  --muted: #a9afc1;
+  --accent: #a5b4fc;
+  --accent-strong: #c7d2fe;
+  --orange: #fda4af;
+  --rose: #fda4af;
 }
 
 * {
@@ -25,7 +39,7 @@ body {
   margin: 0;
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Pretendard, "Pretendard Variable", "Noto Sans KR", system-ui, sans-serif;
 }
 
 button,
@@ -48,7 +62,7 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  box-shadow: 0 12px 30px rgb(31 35 49 / 0.05);
 }
 
 .label {
@@ -218,4 +232,71 @@ button:disabled {
 .trip-map-marker.active {
   background: var(--accent);
   box-shadow: 0 0 0 4px rgb(15 118 110 / 0.2);
+}
+
+.field,
+.secondary-button,
+.segmented,
+.chip,
+.saved-trip {
+  background: var(--panel);
+}
+
+.primary-button {
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+}
+
+.segmented.active,
+.chip.active,
+.badge.active,
+.source-badge.ai,
+.saved-trip.active,
+.chat-message.user {
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel));
+}
+
+.theme-toggle {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 9999px;
+  background: var(--panel);
+  padding: 0.5rem 0.8rem;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgb(31 35 49 / 0.06);
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  border-color: var(--accent);
+}
+
+.theme-toggle-icon {
+  display: grid;
+  width: 1.3rem;
+  height: 1.3rem;
+  place-items: center;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+  color: var(--accent-strong);
+  font-size: 1rem;
+}
+
+:root[data-theme="dark"] .bg-white {
+  background-color: var(--panel) !important;
+}
+
+:root[data-theme="dark"] .text-slate-500,
+:root[data-theme="dark"] .text-slate-600,
+:root[data-theme="dark"] .text-slate-700 {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] .text-slate-900,
+:root[data-theme="dark"] .text-slate-800 {
+  color: var(--foreground) !important;
 }
