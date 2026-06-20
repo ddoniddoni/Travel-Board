@@ -121,6 +121,9 @@ export function TripMapPreview({
     <section className="panel p-5" id="trip-map-preview">
       <p className="text-sm font-bold text-[var(--accent)]">Google 지도</p>
       <h2 className="mt-1 text-2xl font-bold">일정 동선</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-600">
+        마커 번호와 선은 방문 순서예요. 실제 도로 경로와 이동 시간은 아직 반영하지 않습니다.
+      </p>
 
       {selectedStop ? (
         <>
@@ -238,7 +241,7 @@ function renderRouteLine(
   return new google.maps.Polyline({
     map,
     path,
-    strokeColor: "#0f766e",
+    strokeColor: "#6366f1",
     strokeOpacity: 0.72,
     strokeWeight: 3,
   });
