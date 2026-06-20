@@ -291,6 +291,50 @@ button:disabled {
   outline-offset: 3px;
 }
 
+.timeline-item {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  background: var(--panel-muted);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.timeline-item:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.timeline-item.selected,
+.place-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.timeline-item:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  outline-offset: 3px;
+}
+
+.timeline-item:disabled {
+  cursor: default;
+}
+
+.place-card {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.selection-label {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+  padding: 0.2rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+
 .theme-toggle:hover,
 .theme-toggle:focus-visible {
   border-color: var(--accent);

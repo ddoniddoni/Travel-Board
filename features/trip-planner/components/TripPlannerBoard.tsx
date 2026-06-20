@@ -352,6 +352,20 @@ export function TripPlannerBoard() {
     });
   }
 
+  function selectPlaceFromCard(placeId: string) {
+    setSelectedPlaceId(placeId);
+    const itineraryItem = tripPlan?.days
+      .flatMap((day) => day.items)
+      .find((item) => item.placeId === placeId);
+
+    if (itineraryItem) {
+      document.getElementById(`itinerary-item-${itineraryItem.id}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }
+
   const sourceLabel = source ? sourceLabels[source] : null;
 
   return (
@@ -557,7 +571,10 @@ export function TripPlannerBoard() {
                   </div>
 
                   <ol className="space-y-3">
-                    {day.items.map((item) => (
+                    {day.items.map((item) => {
+                      const isSelected = item.placeId === displayedSelectedPlaceId;
+
+                      return (
                       <li
                         className="grid grid-cols-[72px_1fr] gap-3"
                         key={item.id}
@@ -565,20 +582,31 @@ export function TripPlannerBoard() {
                         <time className="pt-2 text-sm font-bold text-slate-500">
                           {item.startTime}
                         </time>
-                        <div className="rounded-md bg-[var(--panel-muted)] px-3 py-2">
+                        <button
+                          aria-pressed={isSelected}
+                          className={isSelected ? "timeline-item selected" : "timeline-item"}
+                          disabled={!item.placeId}
+                          id={`itinerary-item-${item.id}`}
+                          onClick={() => item.placeId && setSelectedPlaceId(item.placeId)}
+                          type="button"
+                        >
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-bold">{item.title}</p>
                             <span className="rounded bg-white px-2 py-1 text-xs font-bold text-slate-600">
                               {itemTypeLabels[item.type]} · {item.durationMinutes}
                               분
                             </span>
+                            {isSelected ? (
+                              <span className="selection-label">선택한 장소</span>
+                            ) : null}
                           </div>
                           <p className="mt-1 text-sm leading-6 text-slate-600">
                             {item.note}
                           </p>
-                        </div>
+                        </button>
                       </li>
-                    ))}
+                      );
+                    })}
                   </ol>
                 </article>
               ))
@@ -618,8 +646,8 @@ export function TripPlannerBoard() {
                 <article
                   className={
                     displayedSelectedPlaceId === place.id
-                      ? "rounded-lg border-2 border-[var(--accent)] p-4"
-                      : "rounded-lg border border-[var(--line)] p-4"
+                      ? "place-card selected"
+                      : "place-card"
                   }
                   key={place.id}
                 >
@@ -638,19 +666,32 @@ export function TripPlannerBoard() {
                           : "badge whitespace-nowrap"
                       }
                     >
-                      {selectedPlaceIds.has(place.id) ? "일정 포함" : "후보 장소"}
+                      {displayedSelectedPlaceId === place.id
+                        ? "선택됨"
+                        : selectedPlaceIds.has(place.id)
+                          ? "일정 포함"
+                          : "후보 장소"}
                     </span>
                   </div>
                   <p className="mt-3 text-sm leading-6 text-slate-700">
                     {place.description}
                   </p>
-                  <button
-                    className="mt-3 text-sm font-bold text-[var(--accent)]"
-                    onClick={() => selectPlaceAndRevealMap(place.id)}
-                    type="button"
-                  >
-                    지도에서 보기
-                  </button>
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                    <button
+                      className="text-sm font-bold text-[var(--accent)]"
+                      onClick={() => selectPlaceFromCard(place.id)}
+                      type="button"
+                    >
+                      일정에서 보기
+                    </button>
+                    <button
+                      className="text-sm font-bold text-[var(--accent)]"
+                      onClick={() => selectPlaceAndRevealMap(place.id)}
+                      type="button"
+                    >
+                      지도에서 보기
+                    </button>
+                  </div>
                 </article>
               ))}
               {!tripPlan ? (
