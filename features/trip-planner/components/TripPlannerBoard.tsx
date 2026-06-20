@@ -8,6 +8,9 @@ import { TripMapPreview } from "./TripMapPreview";
 import { StarterExamples, type StarterExample } from "./StarterExamples";
 import {
   deleteSavedTrip,
+  duplicateSavedTrip,
+  exportSavedTrips,
+  importSavedTrips,
   loadSavedTrips,
   renameSavedTrip,
   saveTrip,
@@ -327,6 +330,40 @@ export function TripPlannerBoard() {
       setSource(null);
       setStatus("empty");
       setAssistantMessage("현재 여행 보드를 삭제했습니다.");
+    }
+  }
+
+  function duplicateTrip(tripId: string) {
+    const trips = duplicateSavedTrip(tripId);
+    setSavedTrips(trips);
+    const duplicatedTrip = trips[0];
+    if (duplicatedTrip) {
+      setTripPlan(duplicatedTrip.tripPlan);
+      setSource(duplicatedTrip.source);
+      setStatus("generated");
+      setAssistantMessage("여행 보드 사본을 만들었습니다.");
+    }
+  }
+
+  function exportTrips() {
+    const blob = new Blob([exportSavedTrips(savedTrips)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ai-travel-board-backup.json";
+    link.click();
+    URL.revokeObjectURL(url);
+    setAssistantMessage("저장한 여행 보드를 JSON 파일로 내보냈습니다.");
+  }
+
+  function importTrips(value: string) {
+    try {
+      const trips = importSavedTrips(value);
+      setSavedTrips(trips);
+      setAssistantMessage(`${trips.length}개의 여행 보드를 불러왔습니다.`);
+    } catch (importError) {
+      setStatus("error");
+      setError(importError instanceof Error ? importError.message : "파일을 가져오지 못했습니다.");
     }
   }
 
@@ -653,6 +690,9 @@ export function TripPlannerBoard() {
           <SavedTripList
             activeTripId={tripPlan?.id}
             onDelete={removeSavedTrip}
+            onDuplicate={duplicateTrip}
+            onExport={exportTrips}
+            onImport={importTrips}
             onLoad={loadSavedTrip}
             onRename={renameTrip}
             trips={savedTrips}

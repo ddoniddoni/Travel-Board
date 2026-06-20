@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import type { SavedTrip } from "../storage";
 
 type SavedTripListProps = {
   activeTripId?: string;
   trips: SavedTrip[];
   onDelete: (tripId: string) => void;
+  onDuplicate: (tripId: string) => void;
+  onExport: () => void;
+  onImport: (value: string) => void;
   onLoad: (trip: SavedTrip) => void;
   onRename: (tripId: string, title: string) => void;
 };
@@ -27,11 +30,23 @@ export function SavedTripList({
   activeTripId,
   trips,
   onDelete,
+  onDuplicate,
+  onExport,
+  onImport,
   onLoad,
   onRename,
 }: SavedTripListProps) {
   const [editingTripId, setEditingTripId] = useState<string>();
   const [draftTitle, setDraftTitle] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function importFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    onImport(await file.text());
+    event.target.value = "";
+  }
 
   function startRenaming(trip: SavedTrip) {
     setEditingTripId(trip.tripPlan.id);
@@ -47,6 +62,25 @@ export function SavedTripList({
     <section className="panel p-5">
       <p className="text-sm font-bold text-[var(--accent)]">저장한 여행</p>
       <h2 className="mt-1 text-2xl font-bold">내 여행 보드</h2>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button className="quick-request" onClick={onExport} type="button">
+          JSON 내보내기
+        </button>
+        <button
+          className="quick-request"
+          onClick={() => fileInputRef.current?.click()}
+          type="button"
+        >
+          JSON 가져오기
+        </button>
+        <input
+          accept="application/json,.json"
+          className="sr-only"
+          onChange={importFile}
+          ref={fileInputRef}
+          type="file"
+        />
+      </div>
 
       {trips.length === 0 ? (
         <p className="mt-4 text-sm leading-6 text-slate-600">
@@ -94,6 +128,16 @@ export function SavedTripList({
                   <p className="mt-1 text-xs text-slate-500">
                     {trip.tripPlan.destination} · {trip.tripPlan.days.length}일 · {formatSavedAt(trip.savedAt)}
                   </p>
+                </button>
+              )}
+              {editingTripId === trip.tripPlan.id ? null : (
+                <button
+                  aria-label={`${trip.tripPlan.title} 복제`}
+                  className="saved-trip-delete text-[var(--accent-strong)]"
+                  onClick={() => onDuplicate(trip.tripPlan.id)}
+                  type="button"
+                >
+                  복제
                 </button>
               )}
               {editingTripId === trip.tripPlan.id ? null : (
