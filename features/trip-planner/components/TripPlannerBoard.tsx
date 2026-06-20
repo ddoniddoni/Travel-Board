@@ -238,6 +238,15 @@ export function TripPlannerBoard() {
     void requestTrip(input);
   }
 
+  function retryTrip() {
+    void requestTrip({
+      destination,
+      startDate,
+      endDate,
+      preference: { pace, interests, budgetLevel, companions: ["친구"], notes },
+    });
+  }
+
   async function modifyTrip(message: string) {
     if (!tripPlan) return;
 
@@ -521,6 +530,15 @@ export function TripPlannerBoard() {
               <p className="mt-2 text-sm font-semibold text-[var(--accent-strong)]">
                 {assistantMessage}
               </p>
+            ) : null}
+            {status === "error" ? (
+              <button
+                className="secondary-button mt-3 w-auto"
+                onClick={retryTrip}
+                type="button"
+              >
+                다시 시도
+              </button>
             ) : null}
           </section>
         </aside>
