@@ -67,6 +67,10 @@ function shiftTime(time: string, minutes: number) {
   return `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
 }
 
+function sortItemsByStartTime<T extends { startTime: string }>(items: T[]) {
+  return items.toSorted((left, right) => left.startTime.localeCompare(right.startTime));
+}
+
 const starterExamples: StarterExample[] = [
   {
     id: "seoul-weekend",
@@ -425,8 +429,12 @@ export function TripPlannerBoard() {
       updatedAt: new Date().toISOString(),
       days: tripPlan.days.map((day) => ({
         ...day,
-        items: day.items.map((item) =>
-          item.id === itemId ? { ...item, startTime: shiftTime(item.startTime, minutes) } : item,
+        items: sortItemsByStartTime(
+          day.items.map((item) =>
+            item.id === itemId
+              ? { ...item, startTime: shiftTime(item.startTime, minutes) }
+              : item,
+          ),
         ),
       })),
     });
