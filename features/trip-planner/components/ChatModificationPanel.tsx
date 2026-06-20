@@ -11,6 +11,12 @@ type ChatModificationPanelProps = {
   onSubmit: (message: string) => void;
 };
 
+const quickRequests = [
+  "2일차를 더 여유롭게 바꿔줘",
+  "맛집을 한 곳 더 넣어줘",
+  "비 오는 날에도 괜찮게 바꿔줘",
+];
+
 function formatMessageTime(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
@@ -28,7 +34,7 @@ export function ChatModificationPanel({
   messages,
   onSubmit,
 }: ChatModificationPanelProps) {
-  const [draft, setDraft] = useState("2일차를 더 여유롭게 바꿔줘");
+  const [draft, setDraft] = useState("");
 
   function submit() {
     const message = draft.trim();
@@ -74,10 +80,25 @@ export function ChatModificationPanel({
         )}
           </div>
 
+          <div className="mt-4 flex flex-wrap gap-2" aria-label="빠른 수정 요청">
+            {quickRequests.map((request) => (
+              <button
+                className="quick-request"
+                key={request}
+                onClick={() => setDraft(request)}
+                type="button"
+              >
+                {request}
+              </button>
+            ))}
+          </div>
+
           <textarea
+            aria-label="일정 변경 요청"
             className="field mt-4 min-h-24 resize-none"
             maxLength={800}
             onChange={(event) => setDraft(event.target.value)}
+            placeholder="예: 첫날은 카페를 줄이고, 실내 전시를 넣어줘"
             value={draft}
           />
           <button

@@ -19,6 +19,18 @@ export function StarterExamples({
   isLoading,
   onSelect,
 }: StarterExamplesProps) {
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[520px] items-center justify-center rounded-lg border border-dashed border-[var(--line)] bg-[var(--panel-muted)] p-8 text-center">
+        <div>
+          <span className="loading-orb" aria-hidden="true" />
+          <p className="mt-4 text-lg font-bold">여행 일정을 만드는 중이에요.</p>
+          <p className="mt-2 text-sm text-slate-600">장소와 동선을 정리하고 있어요.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-[520px] items-center justify-center rounded-lg border border-dashed border-[var(--line)] bg-[var(--panel-muted)] p-6 sm:p-8">
       <div className="max-w-2xl text-center">
@@ -31,7 +43,6 @@ export function StarterExamples({
           {examples.map((example) => (
             <button
               className="starter-example"
-              disabled={isLoading}
               key={example.id}
               onClick={() => onSelect(example)}
               type="button"
