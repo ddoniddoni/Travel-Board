@@ -272,6 +272,25 @@ button:disabled {
   box-shadow: 0 4px 12px rgb(31 35 49 / 0.06);
 }
 
+.starter-example {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--panel);
+  padding: 1rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.starter-example:hover:not(:disabled) {
+  border-color: var(--accent);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 14%, transparent);
+  transform: translateY(-2px);
+}
+
+.starter-example:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  outline-offset: 3px;
+}
+
 .theme-toggle:hover,
 .theme-toggle:focus-visible {
   border-color: var(--accent);

@@ -5,6 +5,7 @@ import { ChatModificationPanel } from "./ChatModificationPanel";
 import { SavedTripList } from "./SavedTripList";
 import { ThemeToggle } from "./ThemeToggle";
 import { TripMapPreview } from "./TripMapPreview";
+import { StarterExamples, type StarterExample } from "./StarterExamples";
 import {
   deleteSavedTrip,
   loadSavedTrips,
@@ -42,26 +43,77 @@ const categoryLabels: Record<string, string> = {
   rest: "휴식",
 };
 
-const sourceLabels: Record<PlanSource, { label: string; description: string }> = {
-  ai: {
-    label: "AI 생성",
-    description: "OpenAI 모델이 스키마에 맞춰 생성한 일정입니다.",
-  },
-  mock: {
-    label: "mock 생성",
-    description: "API 키가 없어 mock 데이터로 생성한 일정입니다.",
-  },
-  "mock-fallback": {
-    label: "mock fallback",
-    description: "AI 호출에 실패해 mock 데이터로 안전하게 대체했습니다.",
-  },
-  saved: {
-    label: "저장됨",
-    description: "브라우저에 저장된 여행 보드를 불러왔습니다.",
-  },
+const sourceLabels: Record<PlanSource, string> = {
+  ai: "맞춤 일정",
+  mock: "여행 일정",
+  "mock-fallback": "여행 일정",
+  saved: "저장됨",
 };
 
 const today = new Date().toISOString().slice(0, 10);
+
+function addDays(date: string, days: number) {
+  const nextDate = new Date(`${date}T00:00:00.000Z`);
+  nextDate.setUTCDate(nextDate.getUTCDate() + days);
+  return nextDate.toISOString().slice(0, 10);
+}
+
+const starterExamples: StarterExample[] = [
+  {
+    id: "seoul-weekend",
+    eyebrow: "1박 2일",
+    title: "서울, 맛집과 카페",
+    description: "느긋하게 걷고 맛있는 곳을 중심으로",
+    input: {
+      destination: "서울",
+      startDate: addDays(today, 7),
+      endDate: addDays(today, 8),
+      preference: {
+        pace: "relaxed",
+        interests: ["food", "cafe"],
+        budgetLevel: "medium",
+        companions: ["친구"],
+        notes: "걷기 좋은 동선으로 추천해줘",
+      },
+    },
+  },
+  {
+    id: "busan-food",
+    eyebrow: "주말 여행",
+    title: "부산, 바다와 미식",
+    description: "바다 풍경도 보고 로컬 맛집도 즐기기",
+    input: {
+      destination: "부산",
+      startDate: addDays(today, 14),
+      endDate: addDays(today, 15),
+      preference: {
+        pace: "balanced",
+        interests: ["food", "nature"],
+        budgetLevel: "medium",
+        companions: ["친구"],
+        notes: "바다를 볼 수 있는 코스를 넣어줘",
+      },
+    },
+  },
+  {
+    id: "jeju-rainy",
+    eyebrow: "비 오는 날",
+    title: "제주, 실내 중심",
+    description: "날씨가 흐려도 편안하게 즐기는 코스",
+    input: {
+      destination: "제주",
+      startDate: addDays(today, 21),
+      endDate: addDays(today, 23),
+      preference: {
+        pace: "relaxed",
+        interests: ["cafe", "culture"],
+        budgetLevel: "medium",
+        companions: ["친구"],
+        notes: "비가 와도 즐길 수 있는 실내 장소를 우선해줘",
+      },
+    },
+  },
+];
 
 export function TripPlannerBoard() {
   const [destination, setDestination] = useState("오사카");
@@ -123,24 +175,10 @@ export function TripPlannerBoard() {
     ? selectedPlaceId
     : tripPlan?.days[0]?.items.find((item) => item.placeId)?.placeId;
 
-  async function generateTrip(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function requestTrip(input: TripInput) {
     setStatus("loading");
     setError("");
     setAssistantMessage("");
-
-    const input: TripInput = {
-      destination,
-      startDate,
-      endDate,
-      preference: {
-        pace,
-        interests,
-        budgetLevel,
-        companions: ["친구"],
-        notes,
-      },
-    };
 
     let response: Response;
     let data: unknown;
@@ -174,8 +212,30 @@ export function TripPlannerBoard() {
     setAssistantMessage(
       data.source === "ai"
         ? "AI가 새 여행 보드를 만들고 브라우저에 저장했습니다."
-        : "mock 데이터로 여행 보드를 만들고 브라우저에 저장했습니다.",
+        : "여행 보드를 만들고 이 브라우저에 저장했습니다.",
     );
+  }
+
+  function generateTrip(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void requestTrip({
+      destination,
+      startDate,
+      endDate,
+      preference: { pace, interests, budgetLevel, companions: ["친구"], notes },
+    });
+  }
+
+  function startExample(example: StarterExample) {
+    const { input } = example;
+    setDestination(input.destination);
+    setStartDate(input.startDate);
+    setEndDate(input.endDate);
+    setPace(input.preference.pace);
+    setBudgetLevel(input.preference.budgetLevel);
+    setInterests(input.preference.interests);
+    setNotes(input.preference.notes ?? "");
+    void requestTrip(input);
   }
 
   async function modifyTrip(message: string) {
@@ -292,7 +352,7 @@ export function TripPlannerBoard() {
     });
   }
 
-  const sourceInfo = source ? sourceLabels[source] : null;
+  const sourceLabel = source ? sourceLabels[source] : null;
 
   return (
     <main className="min-h-screen px-5 py-5">
@@ -427,27 +487,22 @@ export function TripPlannerBoard() {
           <section className="mt-5 rounded-md bg-[var(--panel-muted)] p-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-bold">현재 상태</p>
-              {sourceInfo ? (
+              {sourceLabel ? (
                 <span className={`source-badge ${source ?? ""}`}>
-                  {sourceInfo.label}
+                  {sourceLabel}
                 </span>
               ) : null}
             </div>
             <p className="mt-1 text-sm text-slate-600">
-              {status === "empty" && "아직 생성된 여행 보드가 없습니다."}
+              {status === "empty" && "여행지와 취향을 고르거나, 가운데 예시로 바로 시작해 보세요."}
               {status === "loading" &&
-                "조건을 구조화해 여행 일정을 생성 중입니다."}
+                "여행 취향을 바탕으로 동선을 짜고 있어요. 잠시만 기다려 주세요."}
               {status === "editing" &&
                 "기존 여행 보드에 수정 요청을 적용 중입니다."}
               {status === "generated" &&
-                "일정이 보드에 반영되었고 브라우저에 저장됩니다."}
+                "일정이 완성됐어요. 마음에 드는 장소를 지도에서도 확인해 보세요."}
               {status === "error" && error}
             </p>
-            {sourceInfo ? (
-              <p className="mt-2 text-xs font-semibold text-slate-500">
-                {sourceInfo.description}
-              </p>
-            ) : null}
             {assistantMessage ? (
               <p className="mt-2 text-sm font-semibold text-[var(--accent-strong)]">
                 {assistantMessage}
@@ -471,9 +526,9 @@ export function TripPlannerBoard() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {sourceInfo ? (
+              {sourceLabel ? (
                 <span className={`source-badge ${source ?? ""}`}>
-                  {sourceInfo.label}
+                  {sourceLabel}
                 </span>
               ) : null}
               <span className="rounded-md border border-[var(--line)] px-3 py-2 text-sm font-bold text-slate-600">
@@ -528,12 +583,11 @@ export function TripPlannerBoard() {
                 </article>
               ))
             ) : (
-              <div className="flex min-h-[520px] items-center justify-center rounded-lg border border-dashed border-[var(--line)] bg-[var(--panel-muted)] p-8 text-center">
-                <p className="max-w-md text-sm leading-6 text-slate-600">
-                  API가 반환한 TripPlan을 DayPlan과 ItineraryItem 단위로 보여줄
-                  준비가 되어 있습니다.
-                </p>
-              </div>
+              <StarterExamples
+                examples={starterExamples}
+                isLoading={status === "loading"}
+                onSelect={startExample}
+              />
             )}
           </div>
         </section>
@@ -541,6 +595,7 @@ export function TripPlannerBoard() {
         <aside className="space-y-4">
           <ChatModificationPanel
             disabled={!tripPlan || status === "editing"}
+            hasTrip={Boolean(tripPlan)}
             isEditing={status === "editing"}
             messages={tripPlan?.chatMessages ?? []}
             onSubmit={modifyTrip}
