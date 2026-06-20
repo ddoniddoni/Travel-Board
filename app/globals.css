@@ -312,8 +312,13 @@ button:disabled {
   border-radius: 0.625rem;
   background: var(--panel-muted);
   padding: 0.5rem 0.75rem;
-  text-align: left;
   transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.timeline-item-main {
+  width: 100%;
+  background: transparent;
+  text-align: left;
 }
 
 .timeline-item:hover:not(:disabled) {
