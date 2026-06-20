@@ -384,6 +384,20 @@ button:disabled {
   .starter-example { transition: none; }
 }
 
+@media (max-width: 639px) {
+  .panel {
+    border-radius: 0.75rem;
+  }
+
+  .starter-example:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .timeline-item {
+    padding: 0.625rem;
+  }
+}
+
 .theme-toggle:hover,
 .theme-toggle:focus-visible {
   border-color: var(--accent);
