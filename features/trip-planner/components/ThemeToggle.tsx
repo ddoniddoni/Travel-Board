@@ -21,12 +21,12 @@ export function ThemeToggle() {
       aria-label={`${nextTheme === "dark" ? "다크" : "라이트"} 모드로 전환`}
       className="theme-toggle"
       onClick={() => setTheme(nextTheme)}
+      title={`${nextTheme === "dark" ? "다크" : "라이트"} 모드로 전환`}
       type="button"
     >
       <span aria-hidden="true" className="theme-toggle-icon">
         {theme === "dark" ? "☀" : "☾"}
       </span>
-      <span>{theme === "dark" ? "라이트" : "다크"}</span>
     </button>
   );
 }

@@ -14,16 +14,16 @@
 }
 
 :root[data-theme="dark"] {
-  --background: #10111a;
-  --foreground: #f4f5fa;
-  --panel: #191b27;
-  --panel-muted: #222534;
-  --line: #2c3040;
-  --muted: #a9afc1;
-  --accent: #a5b4fc;
-  --accent-strong: #c7d2fe;
-  --orange: #fda4af;
-  --rose: #fda4af;
+  --background: #0b0d14;
+  --foreground: #f7f7fb;
+  --panel: #141722;
+  --panel-muted: #1b1f2c;
+  --line: #2a2f40;
+  --muted: #9ca3b8;
+  --accent: #8791ff;
+  --accent-strong: #b7beff;
+  --orange: #ff9a78;
+  --rose: #ff8094;
 }
 
 * {
@@ -256,14 +256,14 @@ button:disabled {
 }
 
 .theme-toggle {
-  display: inline-flex;
-  min-height: 2.5rem;
-  align-items: center;
-  gap: 0.5rem;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
   border: 1px solid var(--line);
   border-radius: 9999px;
   background: var(--panel);
-  padding: 0.5rem 0.8rem;
+  padding: 0;
   color: var(--foreground);
   font-size: 0.8125rem;
   font-weight: 700;
@@ -277,13 +277,13 @@ button:disabled {
 
 .theme-toggle-icon {
   display: grid;
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 1.8rem;
+  height: 1.8rem;
   place-items: center;
   border-radius: 9999px;
   background: color-mix(in srgb, var(--accent) 16%, var(--panel));
   color: var(--accent-strong);
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 :root[data-theme="dark"] .bg-white {
@@ -299,4 +299,28 @@ button:disabled {
 :root[data-theme="dark"] .text-slate-900,
 :root[data-theme="dark"] .text-slate-800 {
   color: var(--foreground) !important;
+}
+
+:root[data-theme="dark"] .badge {
+  background: #282d3d;
+  color: #b8c0d3;
+}
+
+:root[data-theme="dark"] .source-badge.mock {
+  background: #3a2e1b;
+  color: #f7cf7b;
+}
+
+:root[data-theme="dark"] .source-badge.mock-fallback {
+  background: #3b202a;
+  color: #ffb0bd;
+}
+
+:root[data-theme="dark"] .source-badge.saved {
+  background: #292849;
+  color: #c5c7ff;
+}
+
+:root[data-theme="dark"] .trip-map-marker {
+  border-color: #141722;
 }
