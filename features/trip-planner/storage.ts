@@ -135,3 +135,41 @@ export function renameSavedTrip(tripId: string, title: string): SavedTrip[] {
   writeSavedTrips(trips);
   return trips;
 }
+
+export function duplicateSavedTrip(tripId: string): SavedTrip[] {
+  const original = loadSavedTrips().find((trip) => trip.tripPlan.id === tripId);
+  if (!original) return loadSavedTrips();
+
+  const savedAt = new Date().toISOString();
+  return saveTrip(
+    {
+      ...original.tripPlan,
+      id: `trip-${Date.now()}`,
+      title: `${original.tripPlan.title} 사본`,
+      updatedAt: savedAt,
+    },
+    original.source,
+  );
+}
+
+export function exportSavedTrips(trips: SavedTrip[]) {
+  return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), trips }, null, 2);
+}
+
+export function importSavedTrips(value: string): SavedTrip[] {
+  const importedTrips = parseSavedTrips(value);
+  if (importedTrips.length === 0) {
+    throw new Error("가져올 수 있는 여행 보드가 없습니다.");
+  }
+
+  const currentTrips = loadSavedTrips();
+  const tripsById = new Map<string, SavedTrip>();
+  [...importedTrips, ...currentTrips].forEach((trip) => {
+    if (!tripsById.has(trip.tripPlan.id)) tripsById.set(trip.tripPlan.id, trip);
+  });
+  const trips = [...tripsById.values()]
+    .sort((left, right) => right.savedAt.localeCompare(left.savedAt))
+    .slice(0, maxSavedTrips);
+  writeSavedTrips(trips);
+  return trips;
+}
