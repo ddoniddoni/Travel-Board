@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ChatModificationPanel } from "./ChatModificationPanel";
 import { SavedTripList } from "./SavedTripList";
+import { ThemeToggle } from "./ThemeToggle";
 import { TripMapPreview } from "./TripMapPreview";
 import {
   deleteSavedTrip,
@@ -295,6 +296,13 @@ export function TripPlannerBoard() {
 
   return (
     <main className="min-h-screen px-5 py-5">
+      <header className="mx-auto mb-4 flex max-w-[1480px] items-center justify-between">
+        <div>
+          <p className="text-sm font-bold text-[var(--accent)]">AI Travel Board</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">여행을 한눈에 정리하는 나만의 보드</p>
+        </div>
+        <ThemeToggle />
+      </header>
       <section className="mx-auto grid max-w-[1480px] gap-4 xl:grid-cols-[340px_minmax(0,1fr)_380px]">
         <aside className="panel p-5">
           <p className="text-sm font-bold text-[var(--accent)]">
@@ -570,10 +578,12 @@ export function TripPlannerBoard() {
                     </div>
                     <span
                       className={
-                        selectedPlaceIds.has(place.id) ? "badge active" : "badge"
+                        selectedPlaceIds.has(place.id)
+                          ? "badge active whitespace-nowrap"
+                          : "badge whitespace-nowrap"
                       }
                     >
-                      사용
+                      {selectedPlaceIds.has(place.id) ? "일정 포함" : "후보 장소"}
                     </span>
                   </div>
                   <p className="mt-3 text-sm leading-6 text-slate-700">
