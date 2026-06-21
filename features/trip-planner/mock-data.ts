@@ -101,7 +101,7 @@ function buildPlaces(input: TripInput): PlaceCandidate[] {
         category,
         area: index % 2 === 0 ? "중심가" : "역 근처",
         durationMinutes: category === "food" ? 75 : 90,
-        description: `${label} 취향을 반영해 우선 후보로 넣은 mock 장소입니다.`,
+        description: `${label} 취향을 반영해 우선 후보로 넣은 추천 장소입니다.`,
         tags: [label, paceLabels[input.preference.pace]],
       };
     });
@@ -168,8 +168,8 @@ export function createMockTripPlan(
     days,
     places,
     qualityNotes: [
-      "mock 일정에서도 식사, 휴식, 장소 후보를 분리해 이후 AI 응답으로 교체하기 쉽게 구성했습니다.",
-      "장소 데이터는 Google Places API 연동 시 같은 구조로 대체할 수 있습니다.",
+      "식사, 휴식, 장소 후보를 균형 있게 배치했습니다.",
+      "장소 정보와 지도에서 동선을 함께 확인해 보세요.",
     ],
     chatMessages: [],
     updatedAt: new Date().toISOString(),
@@ -247,8 +247,8 @@ export function modifyMockTripPlan(message: string, tripPlan: TripPlan): TripPla
     ...tripPlan,
     days,
     qualityNotes: [
-      `mock 수정 요청 반영: ${message}`,
-      "다음 단계에서는 AI가 같은 TripPlan 스키마로 수정 결과를 반환하게 됩니다.",
+      `수정 요청 반영: ${message}`,
+      "수정된 동선을 지도와 일정표에서 함께 확인해 보세요.",
     ],
     updatedAt: new Date().toISOString(),
   };

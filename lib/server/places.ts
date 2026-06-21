@@ -126,7 +126,7 @@ export const mockPlacesTool: PlacesProvider = {
         category,
         area: index % 2 === 0 ? "중심가" : "숙소 근처",
         durationMinutes: category === "food" ? 75 : 90,
-        description: `${interestLabels[interest] ?? interest} 취향을 반영한 mock 장소 정보입니다.`,
+        description: `${interestLabels[interest] ?? interest} 취향을 반영한 추천 장소 정보입니다.`,
         tags: [interest, preference.pace],
       } satisfies PlaceCandidate;
     });
@@ -184,11 +184,11 @@ export async function searchPlaces(request: PlaceSearchRequest): Promise<PlaceCa
 }
 
 function getPlacesProvider(): PlacesProvider {
-  if (process.env.USE_MOCK_PLACES === "false" && process.env.GOOGLE_MAPS_API_KEY) {
-    return googlePlacesTool;
+  if (process.env.USE_LOCAL_PLACES === "true") {
+    return mockPlacesTool;
   }
 
-  return mockPlacesTool;
+  return process.env.GOOGLE_MAPS_API_KEY ? googlePlacesTool : mockPlacesTool;
 }
 
 function consumeDailyRequestQuota() {

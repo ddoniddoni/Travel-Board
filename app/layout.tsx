@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AI Travel Board",
-  description: "Structured AI itinerary planning board for editable trip plans.",
+  description: "여행 조건을 일정과 장소, 지도까지 하나의 보드로 정리하는 여행 플래너.",
 };
 
 export default function RootLayout({

@@ -23,7 +23,7 @@ type MapInstance = {
 
 type MarkerInstance = {
   map: MapInstance | null;
-  addListener: (event: string, handler: () => void) => void;
+  addEventListener: (event: "gmp-click", handler: () => void) => void;
 };
 
 type PolylineInstance = {
@@ -53,6 +53,7 @@ type GoogleMapsApi = {
         position: MapPosition;
         title: string;
         content: HTMLElement;
+        gmpClickable: boolean;
         zIndex: number;
       }) => MarkerInstance;
     };
@@ -79,6 +80,7 @@ export function TripMapPreview({
   const [mapError, setMapError] = useState("");
   const stops = useMemo(() => getMapStops(tripPlan), [tripPlan]);
   const selectedStop = stops.find((stop) => stop.place.id === selectedPlaceId) ?? stops[0];
+  const hasSelectedPlace = selectedStop?.place.id === selectedPlaceId;
 
   useEffect(() => {
     const mapElement = mapElementRef.current;
@@ -128,7 +130,7 @@ export function TripMapPreview({
       {selectedStop ? (
         <>
           <div
-            className="mt-4 h-72 overflow-hidden rounded-lg border border-[var(--line)]"
+            className="mt-4 h-80 overflow-hidden rounded-lg border border-[var(--line)] xl:h-[min(42vh,380px)]"
             ref={mapElementRef}
           />
           {mapError ? (
@@ -136,13 +138,17 @@ export function TripMapPreview({
           ) : null}
           <div className="mt-4 rounded-lg bg-[var(--panel-muted)] p-3">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-bold">{selectedStop.place.name}</p>
+              <div className="min-w-0">
+                <p className="truncate font-bold" title={selectedStop.place.name}>
+                  {selectedStop.place.name}
+                </p>
                 <p className="mt-1 text-sm text-slate-600">
                   Day {selectedStop.day} · {selectedStop.startTime} · {selectedStop.place.area}
                 </p>
               </div>
-              <span className="badge active">선택됨</span>
+              <span className="badge active shrink-0 whitespace-nowrap">
+                {hasSelectedPlace ? "선택한 장소" : "첫 번째 일정"}
+              </span>
             </div>
             {selectedStop.place.address ? (
               <p className="mt-2 text-sm text-slate-600">{selectedStop.place.address}</p>
@@ -209,9 +215,10 @@ function renderMarkers(
       position,
       title: stop.place.name,
       content: createMarkerContent(index + 1, stop.place.id === selectedPlaceId),
+      gmpClickable: true,
       zIndex: stop.place.id === selectedPlaceId ? 2 : 1,
     });
-    marker.addListener("click", () => onSelectPlace(stop.place.id));
+    marker.addEventListener("gmp-click", () => onSelectPlace(stop.place.id));
     markersRef.current.push(marker);
   });
 
@@ -264,7 +271,8 @@ function getGoogleMapsUrl(place: PlaceCandidate) {
 }
 
 function loadGoogleMaps() {
-  if (window.google) return Promise.resolve(window.google);
+  const loadedGoogleMaps = getLoadedGoogleMaps();
+  if (loadedGoogleMaps) return Promise.resolve(loadedGoogleMaps);
   if (googleMapsLoader) return googleMapsLoader;
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY;
@@ -272,15 +280,24 @@ function loadGoogleMaps() {
 
   googleMapsLoader = new Promise<GoogleMapsApi>((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&language=ko&region=KR&libraries=marker&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&language=ko&region=KR&libraries=marker`;
     script.async = true;
     script.onload = () => {
-      if (window.google) resolve(window.google);
+      const googleMaps = getLoadedGoogleMaps();
+      if (googleMaps) resolve(googleMaps);
       else reject(new Error("Google Maps API 초기화에 실패했습니다."));
     };
     script.onerror = () => reject(new Error("Google Maps 스크립트를 불러오지 못했습니다."));
     document.head.appendChild(script);
   });
 
+  googleMapsLoader.catch(() => {
+    googleMapsLoader = null;
+  });
+
   return googleMapsLoader;
+}
+
+function getLoadedGoogleMaps() {
+  return typeof window.google?.maps?.Map === "function" ? window.google : null;
 }

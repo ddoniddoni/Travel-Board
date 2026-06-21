@@ -6,6 +6,7 @@ import { SavedTripList } from "./SavedTripList";
 import { ThemeToggle } from "./ThemeToggle";
 import { TripMapPreview } from "./TripMapPreview";
 import { StarterExamples, type StarterExample } from "./StarterExamples";
+import { addItineraryQualityNotes } from "../itinerary-quality";
 import {
   deleteSavedTrip,
   duplicateSavedTrip,
@@ -147,6 +148,8 @@ export function TripPlannerBoard() {
   const [savedTrips, setSavedTrips] = useState<SavedTrip[]>([]);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string>();
+  const [undoPlan, setUndoPlan] = useState<TripPlan | null>(null);
+  const [isConditionFormOpen, setIsConditionFormOpen] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -192,6 +195,7 @@ export function TripPlannerBoard() {
     setStatus("loading");
     setError("");
     setAssistantMessage("");
+    setUndoPlan(null);
 
     let response: Response;
     let data: unknown;
@@ -220,6 +224,7 @@ export function TripPlannerBoard() {
     }
 
     setTripPlan(data.tripPlan);
+    setIsConditionFormOpen(false);
     setSource(data.source);
     setStatus("generated");
     setAssistantMessage(
@@ -265,6 +270,7 @@ export function TripPlannerBoard() {
 
     setStatus("editing");
     setError("");
+    setUndoPlan(null);
 
     let response: Response;
     let data: unknown;
@@ -318,6 +324,8 @@ export function TripPlannerBoard() {
 
   function resetTrip() {
     setTripPlan(null);
+    setIsConditionFormOpen(true);
+    setUndoPlan(null);
     setSource(null);
     setStatus("empty");
     setError("");
@@ -326,6 +334,8 @@ export function TripPlannerBoard() {
 
   function loadSavedTrip(savedTrip: SavedTrip) {
     setTripPlan(savedTrip.tripPlan);
+    setIsConditionFormOpen(false);
+    setUndoPlan(null);
     setSource(savedTrip.source);
     setStatus("generated");
     setError("");
@@ -349,6 +359,7 @@ export function TripPlannerBoard() {
     const duplicatedTrip = trips[0];
     if (duplicatedTrip) {
       setTripPlan(duplicatedTrip.tripPlan);
+      setUndoPlan(null);
       setSource(duplicatedTrip.source);
       setStatus("generated");
       setAssistantMessage("여행 보드 사본을 만들었습니다.");
@@ -424,7 +435,8 @@ export function TripPlannerBoard() {
 
   function shiftItineraryItem(itemId: string, minutes: number) {
     if (!tripPlan) return;
-    setTripPlan({
+    setUndoPlan(tripPlan);
+    const nextTripPlan = {
       ...tripPlan,
       updatedAt: new Date().toISOString(),
       days: tripPlan.days.map((day) => ({
@@ -437,7 +449,8 @@ export function TripPlannerBoard() {
           ),
         ),
       })),
-    });
+    };
+    setTripPlan(addItineraryQualityNotes(nextTripPlan));
     setAssistantMessage(`일정 시간을 ${minutes > 0 ? "30분 늦췄어요." : "30분 앞당겼어요."}`);
   }
 
@@ -449,7 +462,8 @@ export function TripPlannerBoard() {
       return;
     }
 
-    setTripPlan({
+    setUndoPlan(tripPlan);
+    const nextTripPlan = {
       ...tripPlan,
       updatedAt: new Date().toISOString(),
       days: tripPlan.days.map((candidate) =>
@@ -457,8 +471,24 @@ export function TripPlannerBoard() {
           ? { ...candidate, items: candidate.items.filter((item) => item.id !== itemId) }
           : candidate,
       ),
-    });
+    };
+    setTripPlan(addItineraryQualityNotes(nextTripPlan));
     setAssistantMessage("일정 항목을 뺐어요.");
+  }
+
+  function undoLatestManualChange() {
+    if (!undoPlan) return;
+
+    setTripPlan(undoPlan);
+    setUndoPlan(null);
+    setAssistantMessage("방금 변경한 일정을 되돌렸어요.");
+  }
+
+  function updateStartDate(nextStartDate: string) {
+    setStartDate(nextStartDate);
+    setEndDate((currentEndDate) =>
+      currentEndDate < nextStartDate ? nextStartDate : currentEndDate,
+    );
   }
 
   const sourceLabel = source ? sourceLabels[source] : null;
@@ -470,10 +500,29 @@ export function TripPlannerBoard() {
           <p className="text-sm font-bold text-[var(--accent)]">AI Travel Board</p>
           <p className="mt-1 text-sm text-[var(--muted)]">여행을 한눈에 정리하는 나만의 보드</p>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <details className="relative">
+            <summary className="secondary-button list-none select-none">
+              내 여행 {savedTrips.length ? `(${savedTrips.length})` : ""}
+            </summary>
+            <div className="absolute right-0 z-20 mt-2 w-96 max-w-[calc(100vw-2rem)]">
+              <SavedTripList
+                activeTripId={tripPlan?.id}
+                onDelete={removeSavedTrip}
+                onDuplicate={duplicateTrip}
+                onExport={exportTrips}
+                onImport={importTrips}
+                onLoad={loadSavedTrip}
+                onRename={renameTrip}
+                trips={savedTrips}
+              />
+            </div>
+          </details>
+          <ThemeToggle />
+        </div>
       </header>
       <section className="mx-auto grid max-w-[1480px] gap-4 xl:grid-cols-[340px_minmax(0,1fr)_380px]">
-        <aside className="panel p-5">
+        <aside className="panel h-fit p-5 xl:sticky xl:top-4 xl:self-start">
           <p className="text-sm font-bold text-[var(--accent)]">
             AI Travel Board
           </p>
@@ -481,6 +530,23 @@ export function TripPlannerBoard() {
             여행 조건을 구조화하고 일정 보드로 바꾸는 플래너
           </h1>
 
+          {tripPlan && !isConditionFormOpen ? (
+            <section className="mt-5 rounded-lg bg-[var(--panel-muted)] p-4">
+              <p className="text-sm font-bold">{tripPlan.destination} · {tripPlan.days.length}일 일정</p>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                {interests.map((interest) => interestOptions.find((option) => option.id === interest)?.label ?? interest).join(" · ")}
+              </p>
+              <button
+                className="secondary-button condition-edit-button mt-3 w-auto"
+                onClick={() => setIsConditionFormOpen(true)}
+                type="button"
+              >
+                조건 수정
+              </button>
+            </section>
+          ) : null}
+
+          {!tripPlan || isConditionFormOpen ? (
           <form className="mt-6 space-y-4" onSubmit={generateTrip}>
             <label className="block">
               <span className="label">여행지</span>
@@ -496,7 +562,8 @@ export function TripPlannerBoard() {
                 <span className="label">시작일</span>
                 <input
                   className="field"
-                  onChange={(event) => setStartDate(event.target.value)}
+                  min={today}
+                  onChange={(event) => updateStartDate(event.target.value)}
                   type="date"
                   value={startDate}
                 />
@@ -505,6 +572,7 @@ export function TripPlannerBoard() {
                 <span className="label">종료일</span>
                 <input
                   className="field"
+                  min={startDate}
                   onChange={(event) => setEndDate(event.target.value)}
                   type="date"
                   value={endDate}
@@ -592,6 +660,7 @@ export function TripPlannerBoard() {
               </button>
             </div>
           </form>
+          ) : null}
 
           <section aria-live="polite" className="mt-5 rounded-md bg-[var(--panel-muted)] p-4">
             <div className="flex items-center justify-between gap-3">
@@ -627,6 +696,13 @@ export function TripPlannerBoard() {
               </button>
             ) : null}
           </section>
+          <ChatModificationPanel
+            disabled={!tripPlan || status === "editing"}
+            hasTrip={Boolean(tripPlan)}
+            isEditing={status === "editing"}
+            messages={tripPlan?.chatMessages ?? []}
+            onSubmit={modifyTrip}
+          />
         </aside>
 
         <section
@@ -647,6 +723,15 @@ export function TripPlannerBoard() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {undoPlan ? (
+                <button
+                  className="secondary-button w-auto"
+                  onClick={undoLatestManualChange}
+                  type="button"
+                >
+                  변경 되돌리기
+                </button>
+              ) : null}
               {sourceLabel ? (
                 <span className={`source-badge ${source ?? ""}`}>
                   {sourceLabel}
@@ -657,6 +742,20 @@ export function TripPlannerBoard() {
               </span>
             </div>
           </div>
+
+          {tripPlan?.qualityNotes.length ? (
+            <section
+              aria-label="일정 확인 사항"
+              className="mt-5 rounded-lg border border-[var(--line)] bg-[var(--panel-muted)] p-4"
+            >
+              <p className="text-sm font-bold text-[var(--accent)]">일정 확인 사항</p>
+              <ul className="mt-2 space-y-1 text-sm leading-6 text-[var(--muted)]">
+                {tripPlan.qualityNotes.map((note) => (
+                  <li key={note}>• {note}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           <div className="mt-5 space-y-4">
             {tripPlan ? (
@@ -752,24 +851,11 @@ export function TripPlannerBoard() {
           </div>
         </section>
 
-        <aside className="space-y-4">
-          <ChatModificationPanel
-            disabled={!tripPlan || status === "editing"}
-            hasTrip={Boolean(tripPlan)}
-            isEditing={status === "editing"}
-            messages={tripPlan?.chatMessages ?? []}
-            onSubmit={modifyTrip}
-          />
-
-          <SavedTripList
-            activeTripId={tripPlan?.id}
-            onDelete={removeSavedTrip}
-            onDuplicate={duplicateTrip}
-            onExport={exportTrips}
-            onImport={importTrips}
-            onLoad={loadSavedTrip}
-            onRename={renameTrip}
-            trips={savedTrips}
+        <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
+          <TripMapPreview
+            onSelectPlace={setSelectedPlaceId}
+            selectedPlaceId={selectedPlaceId}
+            tripPlan={tripPlan}
           />
 
           <section className="panel p-5">
@@ -837,11 +923,6 @@ export function TripPlannerBoard() {
             </div>
           </section>
 
-          <TripMapPreview
-            onSelectPlace={setSelectedPlaceId}
-            selectedPlaceId={displayedSelectedPlaceId}
-            tripPlan={tripPlan}
-          />
         </aside>
       </section>
     </main>
